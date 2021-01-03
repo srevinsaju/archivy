@@ -46,7 +46,7 @@ def exec(command_path):
             # exited prematurely, show the error to user
             yield f"\nERROR: Got exception when reading output from script: {type(e)}\n"
             yield traceback.format_exc()
-            raise
+            raise RuntimeError
 
     return Response(_generate_output(), mimetype="text/plain")
 
