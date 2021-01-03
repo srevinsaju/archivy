@@ -78,3 +78,7 @@ venv.bak/
 db.json
 data/
 .vim/
+virtualenv/
+*.patch
+.idea/
+*.AppImage
