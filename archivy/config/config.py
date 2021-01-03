@@ -75,6 +75,14 @@ class Config:
         self._config["TEMPLATE_DIRECTORY"] = os.getenv("ARCHIVY_TEMPLATE_DIR")
         self._config["STATIC_DIRECTORY"] = os.getenv("ARCHIVY_STATIC_DIR")
 
+        # make directories
+        self.make_dirs()
+
+    def make_dirs(self):
+        for i in self._config:
+            if not self._config[i] and (i.endswith("DIR") or i.endswith("DIRECTORY")):
+                os.makedirs(self._config[i], exist_ok=True)
+
     def migrate_from_v1(self, old_config: str):
         self.logger.warning("Migrating from v1 Archivy config to v2")
         _data = self.read(old_config)
