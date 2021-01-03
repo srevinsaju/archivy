@@ -213,7 +213,7 @@ class DataObj:
         ```
         """
         data = frontmatter.loads(md_content)
-        dataobj = {}
+        dataobj = dict()
         dataobj["content"] = data.content
         for pair in ["tags", "id", "title", "path"]:
             try:
