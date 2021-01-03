@@ -23,9 +23,11 @@ def pass_defaults():
 
 @app.before_request
 def check_perms():
-    allowed_path = (request.path.startswith("/login") or
-                    request.path.startswith("/static") or
-                    request.path.startswith("/api/login"))
+    allowed_path = (
+        request.path.startswith("/login")
+        or request.path.startswith("/static")
+        or request.path.startswith("/api/login")
+    )
     if not current_user.is_authenticated and not allowed_path:
         return redirect(url_for("login", next=request.path))
     return
@@ -37,14 +39,14 @@ def index():
     path = request.args.get("path", "")
     files = data.get_items(path=path)
     return render_template(
-            "home.html",
-            title="Home",
-            search_enabled=app.config["SEARCH_CONF"]["enabled"],
-            dir=files,
-            current_path=path,
-            new_folder_form=forms.NewFolderForm(),
-            delete_form=forms.DeleteFolderForm()
-        )
+        "home.html",
+        title="Home",
+        search_enabled=app.config["SEARCH_CONF"]["enabled"],
+        dir=files,
+        current_path=path,
+        new_folder_form=forms.NewFolderForm(),
+        delete_form=forms.DeleteFolderForm(),
+    )
 
 
 # TODO: refactor two following methods
@@ -55,11 +57,7 @@ def new_bookmark():
     if form.validate_on_submit():
         path = form.path.data if form.path.data != "not classified" else ""
         tags = form.tags.data.split(",") if form.tags.data != "" else []
-        bookmark = DataObj(
-            url=form.url.data,
-            tags=tags,
-            path=path,
-            type="bookmark")
+        bookmark = DataObj(url=form.url.data, tags=tags, path=path, type="bookmark")
         bookmark.process_bookmark_url()
         bookmark_id = bookmark.insert()
         if bookmark_id:
@@ -67,13 +65,10 @@ def new_bookmark():
             return redirect(f"/dataobj/{bookmark_id}")
     # for bookmarklet
     form.url.data = request.args.get("url", "")
-    path = request.args.get("path", "not classified").strip('/')
+    path = request.args.get("path", "not classified").strip("/")
     # handle empty argument
     form.path.data = path if path != "" else "not classified"
-    return render_template(
-        "dataobjs/new.html",
-        title="New Bookmark",
-        form=form)
+    return render_template("dataobjs/new.html", title="New Bookmark", form=form)
 
 
 @app.route("/notes/new", methods=["GET", "POST"])
@@ -83,22 +78,15 @@ def new_note():
     if form.validate_on_submit():
         path = form.path.data if form.path.data != "not classified" else ""
         tags = form.tags.data.split(",") if form.tags.data != "" else []
-        note = DataObj(
-            title=form.title.data,
-            tags=tags,
-            path=path,
-            type="note")
+        note = DataObj(title=form.title.data, tags=tags, path=path, type="note")
         note_id = note.insert()
         if note_id:
             flash("Note Saved!", "success")
             return redirect(f"/dataobj/{note_id}")
-    path = request.args.get("path", "not classified").strip('/')
+    path = request.args.get("path", "not classified").strip("/")
     # handle empty argument
     form.path.data = path if path != "" else "not classified"
-    return render_template(
-        "/dataobjs/new.html",
-        title="New Note",
-        form=form)
+    return render_template("/dataobjs/new.html", title="New Note", form=form)
 
 
 @app.route("/dataobj/<dataobj_id>")
@@ -116,7 +104,8 @@ def show_dataobj(dataobj_id):
         "dataobjs/show.html",
         title=dataobj["title"],
         dataobj=dataobj,
-        form=forms.DeleteDataForm())
+        form=forms.DeleteDataForm(),
+    )
 
 
 @app.route("/dataobj/delete/<dataobj_id>", methods=["DELETE", "GET"])
@@ -135,7 +124,9 @@ def login():
     form = forms.UserForm()
     if form.validate_on_submit():
         db = get_db()
-        user = db.search((Query().username == form.username.data) & (Query().type == "user"))
+        user = db.search(
+            (Query().username == form.username.data) & (Query().type == "user")
+        )
 
         if user and check_password_hash(user[0]["hashed_password"], form.password.data):
             user = User.from_db(user[0])
@@ -165,9 +156,9 @@ def edit_user():
         db.update(
             {
                 "username": form.username.data,
-                "hashed_password": generate_password_hash(form.password.data)
+                "hashed_password": generate_password_hash(form.password.data),
             },
-            doc_ids=[current_user.id]
+            doc_ids=[current_user.id],
         )
         flash("Information saved!", "success")
         return redirect("/")
