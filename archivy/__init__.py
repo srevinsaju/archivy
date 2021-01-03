@@ -1,7 +1,8 @@
 import logging
-from pathlib import Path
-
 import elasticsearch
+
+
+from pathlib import Path
 from flask import Flask
 from flask_compress import Compress
 from flask_login import LoginManager
@@ -11,6 +12,7 @@ from archivy.api import api_bp
 from archivy.models import User
 from archivy.config import Config
 from archivy.helpers import load_config
+
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
