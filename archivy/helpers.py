@@ -1,39 +1,22 @@
-from pathlib import Path
-import sys
 
+import sys
 import elasticsearch
-import yaml
+
+from pathlib import Path
 from elasticsearch import Elasticsearch
 from flask import current_app, g
 from tinydb import TinyDB, Query, operations
 
-from archivy.config import BaseHooks
-
-
-def load_config(path=""):
-    """Loads `config.yml` file and deserializes it to a python dict."""
-    path = path or current_app.config["INTERNAL_DIR"]
-    with (Path(path) / "config.yml").open() as f:
-        return yaml.load(f.read(), Loader=yaml.FullLoader)
-
-
-def write_config(config: dict):
-    """Writes a new config dict to a `config.yml` file that will override defaults"""
-    with (Path(current_app.config["INTERNAL_DIR"]) / "config.yml").open("w") as f:
-        yaml.dump(config, f)
+from archivy.hooks import BaseHooks
 
 
 def load_hooks():
     try:
-        user_hooks = (Path(current_app.config["USER_DIR"]) / "hooks.py").open()
-    except FileNotFoundError:
-        return BaseHooks()
-
-    user_locals = {}
-    exec(user_hooks.read(), globals(), user_locals)
-    user_hooks.close()
-
-    return user_locals["Hooks"]()
+        from local_hooks import Hooks
+    except ImportError:
+        pass
+    hooks = BaseHooks()
+    return hooks
 
 
 def get_db(force_reconnect=False):
