@@ -1,27 +1,30 @@
 import os
-
 import frontmatter
-from flask import render_template, flash, redirect, request, url_for
+
+from flask import render_template, flash, redirect, request, url_for, Blueprint
 from flask_login import login_user, current_user, logout_user
 from tinydb import Query
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from archivy.models import DataObj, User
-from archivy import data, app, forms
+from archivy import data, forms
 from archivy.helpers import get_db
 
 
-@app.context_processor
+views = Blueprint("core", __name__)
+
+
+@views.context_processor
 def pass_defaults():
     dataobjs = data.get_items()
-    SEP = os.path.sep
+    sep = os.path.sep
     # check windows parsing for js (https://github.com/Uzay-G/archivy/issues/115)
-    if SEP == "\\":
-        SEP += "\\"
+    if sep == "\\":
+        sep += "\\"
     return dict(dataobjs=dataobjs, SEP=os.path.sep)
 
 
-@app.before_request
+@views.before_request
 def check_perms():
     allowed_path = (
         request.path.startswith("/login")
@@ -33,8 +36,8 @@ def check_perms():
     return
 
 
-@app.route("/")
-@app.route("/index")
+@views.route("/")
+@views.route("/index")
 def index():
     path = request.args.get("path", "")
     files = data.get_items(path=path)
@@ -50,7 +53,7 @@ def index():
 
 
 # TODO: refactor two following methods
-@app.route("/bookmarks/new", methods=["GET", "POST"])
+@views.route("/bookmarks/new", methods=["GET", "POST"])
 def new_bookmark():
     form = forms.NewBookmarkForm()
     form.path.choices = [(pathname, pathname) for pathname in data.get_dirs()]
@@ -71,7 +74,7 @@ def new_bookmark():
     return render_template("dataobjs/new.html", title="New Bookmark", form=form)
 
 
-@app.route("/notes/new", methods=["GET", "POST"])
+@views.route("/notes/new", methods=["GET", "POST"])
 def new_note():
     form = forms.NewNoteForm()
     form.path.choices = [(pathname, pathname) for pathname in data.get_dirs()]
@@ -89,7 +92,7 @@ def new_note():
     return render_template("/dataobjs/new.html", title="New Note", form=form)
 
 
-@app.route("/dataobj/<dataobj_id>")
+@views.route("/dataobj/<dataobj_id>")
 def show_dataobj(dataobj_id):
     dataobj = data.get_item(dataobj_id)
 
@@ -108,7 +111,7 @@ def show_dataobj(dataobj_id):
     )
 
 
-@app.route("/dataobj/delete/<dataobj_id>", methods=["DELETE", "GET"])
+@views.route("/dataobj/delete/<dataobj_id>", methods=["DELETE", "GET"])
 def delete_data(dataobj_id):
     try:
         data.delete_item(dataobj_id)
@@ -119,7 +122,7 @@ def delete_data(dataobj_id):
     return redirect("/")
 
 
-@app.route("/login", methods=["GET", "POST"])
+@views.route("/login", methods=["GET", "POST"])
 def login():
     form = forms.UserForm()
     if form.validate_on_submit():
@@ -141,14 +144,14 @@ def login():
     return render_template("users/login.html", form=form, title="Login")
 
 
-@app.route("/logout", methods=["DELETE"])
+@views.route("/logout", methods=["DELETE"])
 def logout():
     logout_user()
     flash("Logged out successfully", "success")
     return redirect("/")
 
 
-@app.route("/user/edit", methods=["GET", "POST"])
+@views.route("/user/edit", methods=["GET", "POST"])
 def edit_user():
     form = forms.UserForm()
     if form.validate_on_submit():
@@ -166,7 +169,7 @@ def edit_user():
     return render_template("users/edit.html", form=form, title="Edit Profile")
 
 
-@app.route("/folders/create", methods=["POST"])
+@views.route("/folders/create", methods=["POST"])
 def create_folder():
     form = forms.NewFolderForm()
     if form.validate_on_submit():
@@ -179,7 +182,7 @@ def create_folder():
     return redirect(request.referrer or "/")
 
 
-@app.route("/folders/delete", methods=["POST"])
+@views.route("/folders/delete", methods=["POST"])
 def delete_folder():
     form = forms.DeleteFolderForm()
     if form.validate_on_submit():
@@ -193,6 +196,6 @@ def delete_folder():
     return redirect(request.referrer or "/")
 
 
-@app.route("/bookmarklet")
+@views.route("/bookmarklet")
 def bookmarklet():
     return render_template("bookmarklet.html")
