@@ -56,6 +56,6 @@ validators == 0.15.0
 # archivy/routes.py: 10
 flask-login == 0.5.0
 
-click_plugins
+click_plugins==1.1.1
 html2text
 flask_compress
