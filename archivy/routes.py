@@ -107,7 +107,8 @@ def show_dataobj(dataobj_id):
         "dataobjs/show.html",
         title=dataobj["title"],
         dataobj=dataobj,
-        form=forms.DeleteDataForm(),
+        current_path=dataobj["dir"],
+        form=forms.DeleteDataForm()
     )
 
 
