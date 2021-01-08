@@ -6,7 +6,6 @@ import click
 from click_plugins import with_plugins
 from flask.cli import FlaskGroup, load_dotenv, shell_command
 
-from archivy import app
 from archivy.config import Config, VERSION
 from archivy.click_web import create_click_web_app
 from archivy.data import open_file, format_file, unformat_file
@@ -14,8 +13,6 @@ from archivy.helpers import load_config, write_config
 from archivy.models import User, DataObj
 
 
-def create_app():
-    return app
 
 
 @with_plugins(iter_entry_points("archivy.plugins"))
@@ -110,7 +107,6 @@ def config():
 def hooks():
     hook_path = Path(app.config["USER_DIR"]) / "hooks.py"
     if not hook_path.exists():
-        print("aaaa")
         with hook_path.open("w") as f:
             f.write(
                 "from archivy.config import BaseHooks\n"
