@@ -161,6 +161,11 @@ form {
 	padding: 7px;
 }
 
+input[id=username],
+input[id=password] {
+    width: 100%;
+}
+
 .LaTeX {
 	width: 50px !important;
 }
