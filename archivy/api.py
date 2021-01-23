@@ -4,7 +4,6 @@ from flask_login import login_user
 from tinydb import Query
 
 from archivy import data
-from archivy.search import query_index
 from archivy.models import DataObj, User
 from archivy.helpers import get_db
 

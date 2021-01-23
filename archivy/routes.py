@@ -32,7 +32,7 @@ def check_perms():
         or request.path.startswith("/api/login")
     )
     if not current_user.is_authenticated and not allowed_path:
-        return redirect(url_for("login", next=request.path))
+        return redirect(url_for("views", next=request.path))
     return
 
 
@@ -200,3 +200,4 @@ def delete_folder():
 @views.route("/bookmarklet")
 def bookmarklet():
     return render_template("bookmarklet.html")
+

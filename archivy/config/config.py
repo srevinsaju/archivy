@@ -1,6 +1,7 @@
 import os
 import appdirs
 import yaml
+from flask import Config
 
 from .constants import SEARCH_CONF
 from ..logging import make_logger
@@ -11,13 +12,14 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
-class Config:
+class ArchivyConfig(object):
     """Configuration object for the application"""
 
     logger = make_logger("config")
 
     def __init__(
         self,
+        flask_config: Config = None,
         config_path: str = None,
         static_directory: str = None,
         template_directory: str = None,
@@ -32,25 +34,36 @@ class Config:
             PORT=5000,
             SECRET_KEY=os.urandom(32),
             SEARCH_CONF=SEARCH_CONF,
+            USER_DIR=os.getcwd(),
             TEMPLATE_DIRECTORY=template_directory,
             STATIC_DIRECTORY=static_directory,
             STATIC_HOST=static_host,
         )
+        self._flask_config = flask_config
+
+    def __dict__(self):
+        return self._config
 
     def __repr__(self):
         return f"ArchivyConfig({self._config})"
 
     def __getitem__(self, item: str):
-        return self._config[item.upper()]
+        if self._flask_config is None or item not in self._flask_config:
+            return self._config[item]
+        else:
+            return self._flask_config[item]
 
     def __setitem__(self, key: str, value: str):
-        self._config[key.upper()] = value
+        self._config[key] = value
 
-    def __getattr__(self, item: str):
-        return self._config[item.upper()]
+    def add_flask_config(self, config: Config):
+        self._flask_config = config
 
-    def override(self, user_conf: dict):
-        self._config.update(user_conf)
+    def override(self, user_conf: dict = None):
+        if user_conf:
+            self._config.update(user_conf)
+        with open(self.config_path) as fp:
+            _data = yaml.dump(self._config, fp, Loader=Loader)
 
     def read(self, yaml_config_path: str = None):
         if yaml_config_path is None:
@@ -67,7 +80,7 @@ class Config:
         :rtype:
         """
 
-        if self.config_path and os.path.exists(self.config_path):
+        if self.exists():
             self.logger.info("Custom user configuration found.")
             self.override(self.read())
 
@@ -78,13 +91,28 @@ class Config:
         # make directories
         self.make_dirs()
 
+    def exists(self):
+        return self.config_path and os.path.exists(self.config_path)
+
     def make_dirs(self):
         for i in self._config:
-            if not self._config[i] and (i.endswith("DIR") or i.endswith("DIRECTORY")):
+            if self._config[i] and (i.endswith("DIR") or i.endswith("DIRECTORY")):
                 os.makedirs(self._config[i], exist_ok=True)
 
-    def migrate_from_v1(self, old_config: str):
+    def _migrate_from_v1(self, old_config: str):
         self.logger.warning("Migrating from v1 Archivy config to v2")
         _data = self.read(old_config)
         with open(self.config_path, "w") as fp:
             fp.write(_data)
+
+    def migration(self, old_config: str):
+        self._migrate_from_v1(old_config)
+
+    def get(self, item, default=None):
+        try:
+            return self.__getitem__(item=item)
+        except KeyError:
+            return default
+
+    def setdefault(self, k, v):
+        self._flask_config[k] = v

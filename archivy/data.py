@@ -9,7 +9,7 @@ from flask import current_app
 from werkzeug.utils import secure_filename
 
 from archivy.helpers import load_hooks
-from archivy.search import remove_from_index
+
 
 
 # FIXME: ugly hack to make sure the app path is evaluated at the right time

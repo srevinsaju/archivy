@@ -1,22 +1,73 @@
+from functools import update_wrapper
 from pathlib import Path
 from os import environ
+
+from click import Context
+from flask_compress import Compress
 from pkg_resources import iter_entry_points
 
 import click
 from click_plugins import with_plugins
-from flask.cli import FlaskGroup, load_dotenv, shell_command
+from flask.cli import FlaskGroup, load_dotenv, shell_command, with_appcontext
 
-from archivy.config import Config, VERSION
+from archivy.config import ArchivyConfig
 from archivy.click_web import create_click_web_app
 from archivy.data import open_file, format_file, unformat_file
-from archivy.helpers import load_config, write_config
+from archivy.main import ArchivyFlaskApp
 from archivy.models import User, DataObj
 
 
+class ArchivyCommandLineFlaskGroup(FlaskGroup):
+    def __init__(self, **kwargs):
+        self._archivy_flask_app = ArchivyFlaskApp()
+        self._archivy_flask_app.bootstrap_search()
+        self._archivy_flask_app.bootstrap_login()
+        self._archivy_flask_app.bootstrap_routes()
+        Compress(self._archivy_flask_app)
+
+        @self._archivy_flask_app.template_filter("pluralize")
+        def pluralize(number, singular="", plural="s"):
+            if number == 1:
+                return singular
+            else:
+                return plural
+        super().__init__(**kwargs, create_app=self.archivy)
+
+    def archivy(self, script_info):
+        return self._archivy_flask_app
+
+    def command(self, *args, **kwargs):
+        """This works exactly like the method of the same name on a regular
+        :class:`click.Group` but it wraps callbacks in :func:`with_appcontext`
+        unless it's disabled by passing ``with_appcontext=False``.
+        """
+        wrap_for_ctx = kwargs.pop("with_appcontext", True)
+        wrap_for_archivy = kwargs.pop("with_archivy", False)
+
+        def decorator(f):
+            if wrap_for_ctx:
+                f = with_appcontext(f)
+
+            if wrap_for_archivy:
+                archivy = self._archivy_flask_app
+                f = with_archivy(f)
+            return click.Group.command(self, *args, **kwargs)(f)
+
+        return decorator
+
+    def pass_archivy(self, f):
+        """Marks a callback as wanting to receive the current context
+        object as first argument.
+        """
+
+        def new_func(*args, **kwargs):
+            return f(self._archivy_flask_app, *args, **kwargs)
+
+        return update_wrapper(new_func, f)
 
 
 @with_plugins(iter_entry_points("archivy.plugins"))
-@click.group(cls=FlaskGroup, create_app=create_app)
+@click.group(cls=ArchivyCommandLineFlaskGroup)
 def cli():
     pass
 
@@ -25,77 +76,12 @@ def cli():
 cli.add_command(shell_command)
 
 
-@cli.command("init", short_help="Initialise your archivy application")
-@click.pass_context
+@cli.command(
+    "init", short_help="Initialise your archivy application"
+)
+@cli.pass_archivy
 def init(ctx):
-    try:
-        load_config()
-        click.confirm(
-            "Config already found. Do you wish to reset it? "
-            "Otherwise run `archivy config`",
-            abort=True,
-        )
-    except FileNotFoundError:
-        pass
-
-    # ask if to remove old users
-    try:
-        users_db = (Path(app.config["INTERNAL_DIR"]) / "db.json").resolve(strict=True)
-        remove_old_users = click.confirm(
-            "Found an existing user database. Do you want " "to remove them?"
-        )
-        if remove_old_users:
-            users_db.unlink()
-    except FileNotFoundError:
-        pass
-    # remove the old configuration, and add version to it
-    write_config({"version": VERSION})
-
-    config = Config()
-    delattr(config, "SECRET_KEY")
-
-    click.echo("This is the archivy installation initialization wizard.")
-    data_dir = click.prompt(
-        "Enter the full path of the " "directory where you'd like us to store data.",
-        type=str,
-        default=str(Path(".").resolve()),
-    )
-
-    es_enabled = click.confirm(
-        "Would you like to enable Elasticsearch? For this to work "
-        "when you run archivy, you must have ES installed."
-        "See https://archivy.github.io/setup-search/ for more info."
-    )
-    if es_enabled:
-        config.SEARCH_CONF["enabled"] = 1
-    else:
-        delattr(config, "SEARCH_CONF")
-
-    create_new_user = click.confirm("Would you like to create a new admin user?")
-    if create_new_user:
-        username = click.prompt("Username")
-        password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
-        if not ctx.invoke(create_admin, username=username, password=password):
-            return
-
-    config.HOST = click.prompt(
-        "Host [localhost (127.0.0.1)]",
-        type=str,
-        default="127.0.0.1",
-        show_default=False,
-    )
-
-    config.override({"USER_DIR": data_dir})
-    app.config["USER_DIR"] = data_dir
-
-    # create data dir
-    (Path(data_dir) / "data").mkdir(exist_ok=True, parents=True)
-
-    write_config(vars(config))
-    click.echo(
-        "Config successfully created at "
-        + str((Path(app.config["INTERNAL_DIR"]) / "config.yml").resolve())
-    )
+    pass
 
 
 @cli.command("config", short_help="Open archivy config.")
@@ -119,7 +105,8 @@ def hooks():
 
 
 @cli.command("run", short_help="Runs archivy web application")
-def run():
+@cli.pass_archivy
+def run(app):
     click.echo("Running archivy...")
     load_dotenv()
     environ["FLASK_RUN_FROM_CLI"] = "false"

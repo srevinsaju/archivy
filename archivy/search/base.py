@@ -1,5 +1,4 @@
 from archivy.logging import make_logger
-from archivy.main import ArchivyFlaskApp
 
 
 class SearchEngine:
@@ -7,20 +6,34 @@ class SearchEngine:
 
     def __init__(
         self,
-        app: ArchivyFlaskApp = None,
         config: dict = None
     ):
         self.config = config
-        self.app = app
-
-    def bootstrap(self):
+        
+    @property
+    def engine(self):
         raise NotImplementedError
 
-    def pre_init(self):
+    def bootstrap(self) -> None:
+        raise NotImplementedError
+
+    def pre_init(self) -> None:
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
 
     def set_config(self, config: dict):
         self.config = config
+
+    def add(self, dataobj_id: str) -> None:
+        raise NotImplementedError()
+
+    def remove(self, dataobj_id: str) -> None:
+        raise NotImplementedError()
+
+    def query(self, query: str) -> list:
+        raise NotImplementedError()
+
+    def create(self) -> None:
+        raise NotImplementedError()

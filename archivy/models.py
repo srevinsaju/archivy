@@ -15,9 +15,16 @@ from tinydb import Query
 from werkzeug.security import generate_password_hash
 
 from archivy import helpers
-from archivy.data import create
-from archivy.search import add_to_index
+# from archivy.data import create
 
+
+
+# TODO: use this as 'type' field
+# class DataobjType(Enum):
+#     BOOKMARK = 'bookmark'
+#     POCKET_BOOKMARK = 'bookmark imported from pocket'
+#     NOTE = 'note'
+#     PROCESSED_DATAOBJ = 'bookmark that has been processed'
 
 # TODO: use this as 'type' field
 # class DataobjType(Enum):
@@ -26,19 +33,13 @@ from archivy.search import add_to_index
 #     NOTE = 'note'
 #     PROCESSED_DATAOBJ = 'bookmark that has been processed'
 
-# TODO: use this as 'type' field
-# class DataobjType(Enum):
-#     BOOKMARK = 'bookmark'
-#     POCKET_BOOKMARK = 'bookmark imported from pocket'
-#     NOTE = 'note'
-#     PROCESSED_DATAOBJ = 'bookmark that has been processed'
+
 @attrs(kw_only=True)
 class DataObj:
     """
     Class that holds a data object (either a note or a bookmark).
 
     Attributes:
-
     [Required to pass when creating a new object]
 
     - **type** -> "note" or "bookmark"
