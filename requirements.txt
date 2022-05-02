@@ -54,7 +54,7 @@ validators == 0.15.0
 # archivy/__init__.py: 9
 # archivy/models.py: 13
 # archivy/routes.py: 10
-flask-login == 0.5.0
+flask-login==0.6.1
 
 click_plugins
 html2text
