@@ -33,7 +33,7 @@ elasticsearch == 7.7.1
 
 
 # archivy/run.py: 1
-python_dotenv == 0.13.0
+python_dotenv==0.21.0
 
 # archivy/data.py: 8
 # archivy/models.py: 5
