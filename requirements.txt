@@ -9,7 +9,7 @@
 Flask == 1.1.2
 
 # archivy/forms.py: 2
-Flask_WTF == 0.14.3
+Flask_WTF==1.2.1
 
 # archivy/forms.py: 4
 WTForms == 2.3.1
