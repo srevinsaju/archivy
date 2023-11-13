@@ -38,7 +38,7 @@ python_dotenv == 0.13.0
 # archivy/data.py: 8
 # archivy/models.py: 5
 
-python_frontmatter == 0.5.0
+python_frontmatter==1.0.1
 
 # archivy/models.py: 7
 # archivy/routes.py: 4
