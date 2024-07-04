@@ -49,7 +49,7 @@ requests == 2.24.0
 tinydb == 4.1.1
 
 # archivy/models.py: 8
-validators == 0.15.0
+validators==0.30.0
 
 # archivy/__init__.py: 9
 # archivy/models.py: 13
