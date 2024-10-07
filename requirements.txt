@@ -46,7 +46,7 @@ requests == 2.24.0
 
 # archivy/extensions.py: 7
 # archivy/routes.py: 5
-tinydb == 4.1.1
+tinydb==4.8.1
 
 # archivy/models.py: 8
 validators == 0.15.0
